@@ -85,6 +85,13 @@ public class Socket {
             @Override
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 Log.d(TAG, String.format("Disconnect closing, reason is: %S, code value: %d", reason, code));
+                isConnected = false;
+                Log.d(TAG, "onClosing: " + reason);
+                client.dispatcher().executorService().execute(() -> {
+                    if (clientListener != null) {
+                        clientListener.onDisconnect(code, reason);
+                    }
+                });
             }
 
             @Override
