@@ -15,6 +15,9 @@ import okio.ByteString;
  * Created by Kirill Kochnev on 24.07.17.
  */
 
+/**
+ * Class for which communicate directly with websocket connection {@link WebSocket}
+ */
 public class Socket {
     private static final String TAG = "SOCKET";
     private static int DEFAULT_RECONNECT_COUNT = 3;
@@ -87,6 +90,7 @@ public class Socket {
             @Override
             public void onClosed(WebSocket webSocket, int code, String reason) {
                 isConnected = false;
+                Log.d(TAG, "onClosed: " + reason);
                 client.dispatcher().executorService().execute(() -> {
                     if (clientListener != null) {
                         clientListener.onDisconnect(code, reason);
@@ -112,6 +116,9 @@ public class Socket {
         };
     }
 
+    /**
+     * method which trigger reconnect
+     */
     public void reconnect() {
         if (reconnectAttempts > 0) {
             ws = client.newWebSocket(request, listener);
@@ -119,10 +126,18 @@ public class Socket {
         }
     }
 
+    /**
+     * method which trigger reconnect
+     *
+     * @return true if disconnected successfully
+     */
     public boolean disconnect() {
         return ws.close(NORMAL_DISCONNECTION_CODE, "no listeners");
     }
 
+    /**
+     * method which makes connection with websocket if connection was established before it just returns
+     */
     public void connect() {
         if (isConnected) {
             Log.d(TAG, "WEB Socket is already connected");
@@ -131,6 +146,11 @@ public class Socket {
         ws = client.newWebSocket(request, listener);
     }
 
+    /**
+     * method for sending messages
+     *
+     * @param message to be sended
+     */
     public void send(String message) {
         ws.send(message);
     }
