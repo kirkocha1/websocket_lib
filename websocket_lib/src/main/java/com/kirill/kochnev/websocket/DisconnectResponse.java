@@ -1,9 +1,7 @@
 package com.kirill.kochnev.websocket;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Created by kirill on 04.08.17.
@@ -36,10 +34,10 @@ public class DisconnectResponse {
         this.code = code;
     }
 
-    public String createRawJson() throws JSONException {
-        JSONObject object = new JSONObject();
-        object.put(DISCONNECTED_MESSAGE, description);
-        object.put(DISCONNECT_CODE, code);
+    public String createRawJson() {
+        JsonObject object = new JsonObject();
+        object.addProperty(DISCONNECTED_MESSAGE, description);
+        object.addProperty(DISCONNECT_CODE, code);
         return object.toString();
     }
 
