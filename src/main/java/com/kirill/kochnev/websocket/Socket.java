@@ -33,49 +33,66 @@ public class Socket {
 
     private ISocketListener clientListener;
 
-    public Socket(String url, int reconnectAttempts, ISocketListener listener) {
+    private static OkHttpClient provideDefaltOkClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .build();
+    }
+
+    public Socket(String url, OkHttpClient client, int reconnectAttempts, ISocketListener listener) {
         this.serverUri = url;
         this.reconnectAttempts = reconnectAttempts;
         this.clientListener = listener;
+        this.client = client;
         initConnection();
+    }
+
+    public Socket(String url) {
+        this(url, provideDefaltOkClient(), DEFAULT_RECONNECT_COUNT, null);
     }
 
     public Socket(String url, ISocketListener listener) {
         this(url, DEFAULT_RECONNECT_COUNT, listener);
     }
 
-    public Socket(String url) {
-        this(url, DEFAULT_RECONNECT_COUNT, null);
+    public Socket(String url, int reconnectAttempts, ISocketListener listener) {
+        this(url, provideDefaltOkClient(), reconnectAttempts, listener);
     }
+
 
     public void setClientListener(ISocketListener clientListener) {
         this.clientListener = clientListener;
     }
 
     private void initConnection() {
-        client = new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .build();
         request = new Request.Builder().url(serverUri).build();
         listener = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
                 Log.d(TAG, "Connect to socket server");
                 isConnected = true;
-                client.dispatcher().executorService().execute(() -> {
-                    if (clientListener != null) {
-                        clientListener.onConnect(response);
-                    }
-                });
+                client.dispatcher().executorService().execute(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (clientListener != null) {
+                                    clientListener.onConnect(response);
+                                }
+                            }
+                        });
             }
 
             @Override
             public void onMessage(WebSocket webSocket, String data) {
-                client.dispatcher().executorService().execute(() -> {
-                    if (clientListener != null) {
-                        clientListener.onMessage(data);
-                    }
-                });
+                client.dispatcher().executorService().execute(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (clientListener != null) {
+                                    clientListener.onMessage(data);
+                                }
+                            }
+                        });
             }
 
             @Override
@@ -87,38 +104,50 @@ public class Socket {
                 Log.d(TAG, String.format("Disconnect closing, reason is: %S, code value: %d", reason, code));
                 isConnected = false;
                 Log.d(TAG, "onClosing: " + reason);
-                client.dispatcher().executorService().execute(() -> {
-                    if (clientListener != null) {
-                        clientListener.onDisconnect(code, reason);
-                    }
-                });
+                client.dispatcher().executorService().execute(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (clientListener != null) {
+                                    clientListener.onDisconnect(code, reason);
+                                }
+                            }
+                        });
             }
 
             @Override
             public void onClosed(WebSocket webSocket, int code, String reason) {
                 isConnected = false;
                 Log.d(TAG, "onClosed: " + reason);
-                client.dispatcher().executorService().execute(() -> {
-                    if (clientListener != null) {
-                        clientListener.onDisconnect(code, reason);
-                    }
-                });
+                client.dispatcher().executorService().execute(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (clientListener != null) {
+                                    clientListener.onDisconnect(code, reason);
+                                }
+                            }
+                        });
             }
 
             @Override
             public void onFailure(WebSocket webSocket, Throwable e, Response response) {
                 Log.d(TAG, "onFailed error: " + e.getMessage());
                 isConnected = false;
-                client.dispatcher().executorService().execute(() -> {
-                    if (reconnectAttempts == 0) {
-                        Log.e(TAG, "NO reconnect attempts");
-                        if (clientListener != null) {
-                            clientListener.onError(e);
-                        }
-                    } else {
-                        reconnect();
-                    }
-                });
+                client.dispatcher().executorService().execute(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (reconnectAttempts == 0) {
+                                    Log.e(TAG, "NO reconnect attempts");
+                                    if (clientListener != null) {
+                                        clientListener.onError(e);
+                                    }
+                                } else {
+                                    reconnect();
+                                }
+                            }
+                        });
             }
         };
     }
