@@ -68,7 +68,7 @@ public class Socket {
         request = new Request.Builder().url(serverUri).build();
         listener = new WebSocketListener() {
             @Override
-            public void onOpen(WebSocket webSocket, Response response) {
+            public void onOpen(WebSocket webSocket, final Response response) {
                 Log.d(TAG, "Connect to socket server");
                 isConnected = true;
                 client.dispatcher().executorService().execute(
@@ -83,7 +83,7 @@ public class Socket {
             }
 
             @Override
-            public void onMessage(WebSocket webSocket, String data) {
+            public void onMessage(WebSocket webSocket, final String data) {
                 client.dispatcher().executorService().execute(
                         new Runnable() {
                             @Override
@@ -100,7 +100,7 @@ public class Socket {
             }
 
             @Override
-            public void onClosing(WebSocket webSocket, int code, String reason) {
+            public void onClosing(WebSocket webSocket, final int code, final String reason) {
                 Log.d(TAG, String.format("Disconnect closing, reason is: %S, code value: %d", reason, code));
                 isConnected = false;
                 Log.d(TAG, "onClosing: " + reason);
@@ -116,7 +116,7 @@ public class Socket {
             }
 
             @Override
-            public void onClosed(WebSocket webSocket, int code, String reason) {
+            public void onClosed(WebSocket webSocket, final int code, final String reason) {
                 isConnected = false;
                 Log.d(TAG, "onClosed: " + reason);
                 client.dispatcher().executorService().execute(
@@ -131,7 +131,7 @@ public class Socket {
             }
 
             @Override
-            public void onFailure(WebSocket webSocket, Throwable e, Response response) {
+            public void onFailure(WebSocket webSocket, final Throwable e, Response response) {
                 Log.d(TAG, "onFailed error: " + e.getMessage());
                 isConnected = false;
                 client.dispatcher().executorService().execute(
