@@ -1,7 +1,5 @@
 package com.kirill.kochnev.websocket;
 
-import android.util.Log;
-
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -69,7 +67,6 @@ public class Socket {
         listener = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, final Response response) {
-                Log.d(TAG, "Connect to socket server");
                 isConnected = true;
                 client.dispatcher().executorService().execute(
                         new Runnable() {
@@ -101,9 +98,7 @@ public class Socket {
 
             @Override
             public void onClosing(WebSocket webSocket, final int code, final String reason) {
-                Log.d(TAG, String.format("Disconnect closing, reason is: %S, code value: %d", reason, code));
                 isConnected = false;
-                Log.d(TAG, "onClosing: " + reason);
                 client.dispatcher().executorService().execute(
                         new Runnable() {
                             @Override
@@ -118,7 +113,6 @@ public class Socket {
             @Override
             public void onClosed(WebSocket webSocket, final int code, final String reason) {
                 isConnected = false;
-                Log.d(TAG, "onClosed: " + reason);
                 client.dispatcher().executorService().execute(
                         new Runnable() {
                             @Override
@@ -132,14 +126,12 @@ public class Socket {
 
             @Override
             public void onFailure(WebSocket webSocket, final Throwable e, Response response) {
-                Log.d(TAG, "onFailed error: " + e.getMessage());
                 isConnected = false;
                 client.dispatcher().executorService().execute(
                         new Runnable() {
                             @Override
                             public void run() {
                                 if (reconnectAttempts == 0) {
-                                    Log.e(TAG, "NO reconnect attempts");
                                     if (clientListener != null) {
                                         clientListener.onError(e);
                                     }
@@ -176,7 +168,6 @@ public class Socket {
      */
     public void connect() {
         if (isConnected) {
-            Log.d(TAG, "WEB Socket is already connected");
             return;
         }
         ws = client.newWebSocket(request, listener);
