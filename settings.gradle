@@ -1,1 +1,1 @@
-include ':stubs'
+include ':websocket_lib'

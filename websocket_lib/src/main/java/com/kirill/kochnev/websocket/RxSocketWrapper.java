@@ -6,6 +6,7 @@ import org.json.JSONException;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.functions.Action;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.Response;
 
@@ -77,14 +78,26 @@ public class RxSocketWrapper {
      * @return {@link Completable} which makes reconnection when on subscribe
      */
     public Completable restart() {
-        return Completable.fromAction(() -> socket.reconnect());
+        return Completable.fromAction(
+                new Action() {
+                    @Override
+                    public void run() throws Exception {
+                        socket.reconnect();
+                    }
+                });
     }
 
     /**
      * @return {@link Completable} which makes disconnection when on subscribe
      */
     public Completable disconnect() {
-        return Completable.fromAction(() -> socket.disconnect());
+        return Completable.fromAction(
+                new Action() {
+                    @Override
+                    public void run() throws Exception {
+                        socket.disconnect();
+                    }
+                });
     }
 
 
@@ -94,21 +107,25 @@ public class RxSocketWrapper {
      * @param message to be send
      * @return {@link Completable}
      */
-    public Completable sendMessageAsComplitable(String message) {
+    public Completable sendMessageAsComplitable(final String message) {
         Log.e(TAG, message);
-        return Completable.fromAction(() -> {
-            if (socket.isConnected()) {
-                Log.e(TAG, "send Message " + message);
-                socket.send(message);
-            } else {
-                throw new Exception("message wasn't sended sucessfully");
-            }
-
-        });
+        return Completable.fromAction(
+                new Action() {
+                    @Override
+                    public void run() throws Exception {
+                        if (socket.isConnected()) {
+                            Log.e(TAG, "send Message " + message);
+                            socket.send(message);
+                        } else {
+                            throw new Exception("message wasn't sended sucessfully");
+                        }
+                    }
+                });
     }
 
     /**
      * Method sends message
+     *
      * @param message for websocket
      */
     public void sendMessage(String message) {
